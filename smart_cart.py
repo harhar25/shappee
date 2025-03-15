@@ -1,6 +1,7 @@
 import tkinter as tk
 import csv
 from tkinter import ttk
+import os
 
 # Load products from CSV
 def load_products(filename="products.csv"):
@@ -20,10 +21,14 @@ class SmartCartApp:
         self.root.title("Smart Cart Scanner")
         self.root.geometry("600x600")  # Adjusted for better UI
         
-        # Set background image
-        self.bg_image = tk.PhotoImage(file="background.png")  # Ensure image file exists
-        self.bg_label = tk.Label(root, image=self.bg_image)
-        self.bg_label.place(relwidth=1, relheight=1)
+        # Check if background image exists
+        bg_image_path = "background.png"
+        if os.path.exists(bg_image_path):
+            self.bg_image = tk.PhotoImage(file=bg_image_path)
+            self.bg_label = tk.Label(root, image=self.bg_image)
+            self.bg_label.place(relwidth=1, relheight=1)
+        else:
+            self.root.configure(bg="#f8f9fa")  # Default background color
         
         self.cart = []
         self.total = 0.0
@@ -41,7 +46,7 @@ class SmartCartApp:
         self.listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
         
         # Total Price Display
-        self.total_label = tk.Label(root, text=f"Total: $0.00", font=("Arial", 18, "bold"), bg="#f8f9fa", fg="#333")
+        self.total_label = tk.Label(root, text=f"Total: ₱0.00", font=("Arial", 18, "bold"), bg="#f8f9fa", fg="#333")
         self.total_label.pack()
         
         # Button Styling
@@ -67,7 +72,7 @@ class SmartCartApp:
             product = products[barcode]
             print(f"Valid product: {product}")  # Debug log
             self.cart.append(product)
-            self.listbox.insert(tk.END, f"{product['name']} - ${product['price']:.2f}")
+            self.listbox.insert(tk.END, f"{product['name']} - ₱{product['price']:.2f}")
             self.update_total()
         else:
             print("Unknown product.")  # Debug log
@@ -89,7 +94,7 @@ class SmartCartApp:
     def update_total(self):
         self.total = sum(item['price'] for item in self.cart)
         print(f"Updated total: {self.total}")  # Debug log
-        self.total_label.config(text=f"Total: ${self.total:.2f}")
+        self.total_label.config(text=f"Total: ₱{self.total:.2f}")
         
 if __name__ == "__main__":
     print("Starting Smart Cart Application")  # Debug log
