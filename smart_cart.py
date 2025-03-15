@@ -1,65 +1,98 @@
 import tkinter as tk
-from tkinter import ttk
 import csv
+from tkinter import ttk
 
-# Load product database
-products = {}
-with open("products.csv", "r") as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        products[row["barcode"]] = {"name": row["name"], "price": float(row["price"])}
+# Load products from CSV
+def load_products(filename="products.csv"):
+    products = {}
+    with open(filename, newline="", encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            products[row['barcode']] = {'name': row['name'], 'price': float(row['price'])}
+    print("Loaded products:", products)  # Debug log
+    return products
 
-# Cart Data
-cart = []
-total_price = 0.0
+products = load_products()
 
-# GUI Setup
-root = tk.Tk()
-root.title("Smart Cart Scanner")
-root.geometry("480x320")
-root.configure(bg="white")
-
-# UI Elements
-cart_listbox = tk.Listbox(root, width=50, height=10)
-cart_listbox.pack(pady=10)
-
-total_label = tk.Label(root, text="Total: $0.00", font=("Arial", 16), bg="white")
-total_label.pack()
-
-# Remove item function
-def remove_item():
-    global total_price
-    try:
-        selected_index = cart_listbox.curselection()[0]
-        removed_item = cart.pop(selected_index)
-        total_price -= removed_item["price"]
-        update_display()
-    except IndexError:
-        pass
-
-# Read barcode function
-def read_barcode():
-    barcode = input("Scan Barcode: ").strip()
-    if barcode in products:
-        item = products[barcode]
-        cart.append(item)
-        update_display()
-    else:
-        print("Unknown Product")
-
-# Update GUI display
-def update_display():
-    cart_listbox.delete(0, tk.END)
-    for item in cart:
-        cart_listbox.insert(tk.END, f"{item['name']} - ${item['price']:.2f}")
-    total_label.config(text=f"Total: ${total_price:.2f}")
-
-# Remove button
-remove_button = tk.Button(root, text="Remove Item", command=remove_item, bg="red", fg="white")
-remove_button.pack(pady=5)
-
-# Simulate scanning (for testing)
-scan_button = tk.Button(root, text="Simulate Scan", command=read_barcode, bg="blue", fg="white")
-scan_button.pack(pady=5)
-
-root.mainloop()
+class SmartCartApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Smart Cart Scanner")
+        self.root.geometry("600x600")  # Adjusted for better UI
+        
+        # Set background image
+        self.bg_image = tk.PhotoImage(file="background.png")  # Ensure image file exists
+        self.bg_label = tk.Label(root, image=self.bg_image)
+        self.bg_label.place(relwidth=1, relheight=1)
+        
+        self.cart = []
+        self.total = 0.0
+        
+        # Header Styling
+        self.header_label = tk.Label(root, text="🛒 Smart Cart Scanner 🛒", font=("Arial", 20, "bold"), bg="#28a745", fg="white", pady=10)
+        self.header_label.pack(fill=tk.X)
+        
+        # Frame for Products List
+        self.frame = tk.Frame(root, bg="#f8f9fa")
+        self.frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        
+        # Styled Listbox
+        self.listbox = tk.Listbox(self.frame, width=60, height=10, font=("Arial", 14), bg="white", fg="#333", bd=2, relief="solid")
+        self.listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        
+        # Total Price Display
+        self.total_label = tk.Label(root, text=f"Total: $0.00", font=("Arial", 18, "bold"), bg="#f8f9fa", fg="#333")
+        self.total_label.pack()
+        
+        # Button Styling
+        self.button_frame = tk.Frame(root, bg="#f8f9fa")
+        self.button_frame.pack()
+        
+        self.remove_btn = tk.Button(self.button_frame, text="Remove Item", command=self.remove_item, bg="#dc3545", fg="white", font=("Arial", 14, "bold"), padx=15, pady=8)
+        self.remove_btn.grid(row=0, column=0, padx=5, pady=5)
+        
+        self.scan_btn = tk.Button(self.button_frame, text="Scan Barcode", command=self.scan_barcode, bg="#007bff", fg="white", font=("Arial", 14, "bold"), padx=15, pady=8)
+        self.scan_btn.grid(row=0, column=1, padx=5, pady=5)
+        
+        # Entry Box for Manual Barcode Input
+        self.entry = ttk.Entry(root, font=("Arial", 14), justify="center")
+        self.entry.pack(pady=10, ipadx=10, ipady=5, fill=tk.X, padx=10)
+        self.entry.bind("<Return>", self.scan_barcode)
+        
+    def scan_barcode(self, event=None):
+        barcode = self.entry.get().strip()
+        print(f"Scanned barcode: {barcode}")  # Debug log
+        
+        if barcode in products:
+            product = products[barcode]
+            print(f"Valid product: {product}")  # Debug log
+            self.cart.append(product)
+            self.listbox.insert(tk.END, f"{product['name']} - ${product['price']:.2f}")
+            self.update_total()
+        else:
+            print("Unknown product.")  # Debug log
+        
+        self.entry.delete(0, tk.END)
+        
+    def remove_item(self):
+        print("Remove item triggered")  # Debug log
+        selected_index = self.listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            removed_product = self.cart.pop(index)
+            print(f"Removed product: {removed_product}")  # Debug log
+            self.listbox.delete(index)
+            self.update_total()
+        else:
+            print("No item selected for removal.")  # Debug log
+        
+    def update_total(self):
+        self.total = sum(item['price'] for item in self.cart)
+        print(f"Updated total: {self.total}")  # Debug log
+        self.total_label.config(text=f"Total: ${self.total:.2f}")
+        
+if __name__ == "__main__":
+    print("Starting Smart Cart Application")  # Debug log
+    root = tk.Tk()
+    app = SmartCartApp(root)
+    root.mainloop()
