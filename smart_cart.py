@@ -18,18 +18,9 @@ class SmartCartApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Cart Scanner")
-        self.root.state("zoomed")  # Set to fullscreen
+        self.root.attributes("-fullscreen", True)  # Set to true fullscreen
 
-        # Check if background image exists
-        bg_image_path = "background.png"
-        if os.path.exists(bg_image_path):
-            self.bg_image = tk.PhotoImage(file=bg_image_path)
-            self.bg_label = tk.Label(root, image=self.bg_image)
-            self.bg_label.place(relwidth=1, relheight=1)
-        else:
-            self.root.configure(bg="#f8f9fa")
-
-        self.cart = []
+        self.cart = {}
         self.total = 0.0
 
         # Header Styling
@@ -40,15 +31,21 @@ class SmartCartApp:
         self.frame = tk.Frame(root, bg="#f8f9fa", bd=5, relief="ridge")
         self.frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
-        # Styled Listbox
-        self.listbox = tk.Listbox(self.frame, width=60, height=10, font=("Arial", 14), bg="white", fg="#333", bd=2, relief="solid")
-        self.listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+        # Styled Listbox (Now using Treeview for better display)
+        self.tree = ttk.Treeview(self.frame, columns=("Product", "Quantity", "Price", "Actions"), show="headings", height=15)
+        self.tree.heading("Product", text="Product")
+        self.tree.heading("Quantity", text="Qty")
+        self.tree.heading("Price", text="Price")
+        self.tree.column("Product", width=250)
+        self.tree.column("Quantity", width=100, anchor="center")
+        self.tree.column("Price", width=100, anchor="center")
+        self.tree.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
         # Total Price Display
         self.total_label = tk.Label(root, text="Total: ₱0", font=("Arial", 18, "bold"), bg="#f8f9fa", fg="#333")
         self.total_label.pack()
 
-        # Button Styling
+        # Button Frame
         self.button_frame = tk.Frame(root, bg="#f8f9fa")
         self.button_frame.pack(fill=tk.X, padx=10, pady=10)
 
@@ -74,43 +71,65 @@ class SmartCartApp:
     def scan_barcode(self, event=None):
         barcode = self.entry.get().strip()
         if barcode in products:
-            product = products[barcode]
-            self.cart.append(product)
-            formatted_price = self.format_price(product['price'])
-            self.listbox.insert(tk.END, f"{product['name']} - ₱{formatted_price}")
-            self.update_total()
+            if barcode in self.cart:
+                self.cart[barcode]['quantity'] += 1
+            else:
+                self.cart[barcode] = {**products[barcode], 'quantity': 1}
+            self.update_cart_display()
         else:
-            print("Unknown product.")  # You can replace with a label if needed
-
+            print("Unknown product.")
         self.entry.delete(0, tk.END)
         self.entry.focus_set()
 
+    def update_cart_display(self):
+        self.tree.delete(*self.tree.get_children())
+        for barcode, item in self.cart.items():
+            row_id = self.tree.insert("", tk.END, values=(item['name'], item['quantity'], f"₱{self.format_price(item['price'] * item['quantity'])}"))
+            self.tree.set(row_id, column="Actions", value="[ + ]  [ - ]")
+            self.tree.bind("<Double-1>", self.modify_quantity)
+        self.update_total()
+
+    def modify_quantity(self, event):
+        selected_item = self.tree.selection()
+        if selected_item:
+            item_values = self.tree.item(selected_item, "values")
+            for barcode, item in self.cart.items():
+                if item['name'] == item_values[0]:
+                    if event.x > 50:  # Clicked on "-"
+                        if item['quantity'] > 1:
+                            item['quantity'] -= 1
+                        else:
+                            del self.cart[barcode]
+                    else:  # Clicked on "+"
+                        item['quantity'] += 1
+                    break
+            self.update_cart_display()
+
     def remove_item(self):
-        selected_index = self.listbox.curselection()
-        if selected_index:
-            index = selected_index[0]
-            self.cart.pop(index)
-            self.listbox.delete(index)
-            self.update_total()
+        selected_item = self.tree.selection()
+        if selected_item:
+            item_values = self.tree.item(selected_item, "values")
+            for barcode, item in list(self.cart.items()):
+                if item['name'] == item_values[0]:
+                    del self.cart[barcode]
+                    break
+            self.update_cart_display()
         else:
             print("No item selected for removal.")
 
     def clear_cart(self):
         self.cart.clear()
-        self.listbox.delete(0, tk.END)
-        self.update_total()
+        self.update_cart_display()
 
     def update_total(self):
-        self.total = sum(item['price'] for item in self.cart)
+        self.total = sum(item['price'] * item['quantity'] for item in self.cart.values())
         self.total_label.config(text=f"Total: ₱{self.format_price(self.total)}")
 
     def refocus_entry(self, event):
-        """Refocus barcode entry field when user clicks anywhere."""
         self.entry.focus_set()
 
     def format_price(self, price):
-        """Format prices: No decimals if whole, otherwise two decimal places."""
-        return f"{price:.2f}".rstrip('0').rstrip('.')  # Removes .00 but keeps decimals when needed
+        return f"{price:.2f}".rstrip('0').rstrip('.')
 
 if __name__ == "__main__":
     root = tk.Tk()
