@@ -18,7 +18,7 @@ class SmartCartApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Cart Scanner")
-        self.root.geometry("600x600")
+        self.root.state("zoomed")  # Set to fullscreen
 
         # Check if background image exists
         bg_image_path = "background.png"
@@ -37,7 +37,7 @@ class SmartCartApp:
         self.header_label.pack(fill=tk.X)
 
         # Frame for Products List
-        self.frame = tk.Frame(root, bg="#f8f9fa")
+        self.frame = tk.Frame(root, bg="#f8f9fa", bd=5, relief="ridge")
         self.frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
         # Styled Listbox
@@ -50,10 +50,17 @@ class SmartCartApp:
 
         # Button Styling
         self.button_frame = tk.Frame(root, bg="#f8f9fa")
-        self.button_frame.pack()
+        self.button_frame.pack(fill=tk.X, padx=10, pady=10)
 
-        self.remove_btn = tk.Button(self.button_frame, text="Remove Item", command=self.remove_item, bg="#dc3545", fg="white", font=("Arial", 14, "bold"), padx=15, pady=8)
-        self.remove_btn.grid(row=0, column=0, padx=5, pady=5)
+        self.remove_btn = tk.Button(self.button_frame, text="Remove Item", command=self.remove_item, bg="#F9D3D3", fg="black", font=("Arial", 14, "bold"), padx=15, pady=8, relief="flat", bd=0, activebackground="#e74c3c", activeforeground="white")
+        self.remove_btn.pack(side=tk.LEFT, ipadx=10, ipady=5, padx=5, pady=5)
+        self.remove_btn.bind("<Enter>", lambda e: self.remove_btn.config(bg="#e74c3c", fg="white"))
+        self.remove_btn.bind("<Leave>", lambda e: self.remove_btn.config(bg="#F9D3D3", fg="black"))
+        
+        self.clear_btn = tk.Button(self.button_frame, text="Clear Cart", command=self.clear_cart, bg="#D3E5F9", fg="black", font=("Arial", 14, "bold"), padx=15, pady=8, relief="flat", bd=0, activebackground="#3399ff", activeforeground="white")
+        self.clear_btn.pack(side=tk.RIGHT, ipadx=10, ipady=5, padx=5, pady=5)
+        self.clear_btn.bind("<Enter>", lambda e: self.clear_btn.config(bg="#3399ff", fg="white"))
+        self.clear_btn.bind("<Leave>", lambda e: self.clear_btn.config(bg="#D3E5F9", fg="black"))
 
         # Hidden Entry Box for Barcode Scanning
         self.entry = ttk.Entry(root, font=("Arial", 1))  # Tiny font
@@ -66,7 +73,6 @@ class SmartCartApp:
 
     def scan_barcode(self, event=None):
         barcode = self.entry.get().strip()
-        
         if barcode in products:
             product = products[barcode]
             self.cart.append(product)
@@ -89,6 +95,11 @@ class SmartCartApp:
         else:
             print("No item selected for removal.")
 
+    def clear_cart(self):
+        self.cart.clear()
+        self.listbox.delete(0, tk.END)
+        self.update_total()
+
     def update_total(self):
         self.total = sum(item['price'] for item in self.cart)
         self.total_label.config(text=f"Total: ₱{self.format_price(self.total)}")
@@ -105,4 +116,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SmartCartApp(root)
     root.mainloop()
-#Gana na tawn.
