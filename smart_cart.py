@@ -9,7 +9,7 @@ def load_products(filename="products.csv"):
     with open(filename, newline="", encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            products[row['barcode']] = {'name': row['name'], 'price': float(row['price'])}  # Keep decimal format
+            products[row['barcode']] = {'name': row['name'], 'price': float(row['price'])}
     return products
 
 products = load_products()
@@ -27,7 +27,7 @@ class SmartCartApp:
             self.bg_label = tk.Label(root, image=self.bg_image)
             self.bg_label.place(relwidth=1, relheight=1)
         else:
-            self.root.configure(bg="#f8f9fa")  # Default background color
+            self.root.configure(bg="#f8f9fa")
 
         self.cart = []
         self.total = 0.0
@@ -55,9 +55,9 @@ class SmartCartApp:
         self.remove_btn = tk.Button(self.button_frame, text="Remove Item", command=self.remove_item, bg="#dc3545", fg="white", font=("Arial", 14, "bold"), padx=15, pady=8)
         self.remove_btn.grid(row=0, column=0, padx=5, pady=5)
 
-        # Entry Box for Barcode Scanning
-        self.entry = ttk.Entry(root, font=("Arial", 14), justify="center")
-        self.entry.pack(pady=10, ipadx=10, ipady=5, fill=tk.X, padx=10)
+        # Hidden Entry Box for Barcode Scanning
+        self.entry = ttk.Entry(root, font=("Arial", 1))  # Tiny font
+        self.entry.place(x=-100, y=-100)  # Position it off-screen
         self.entry.bind("<Return>", self.scan_barcode)
         self.entry.focus_set()
 
@@ -70,11 +70,11 @@ class SmartCartApp:
         if barcode in products:
             product = products[barcode]
             self.cart.append(product)
-            formatted_price = self.format_price(product['price'])  # Format price correctly
+            formatted_price = self.format_price(product['price'])
             self.listbox.insert(tk.END, f"{product['name']} - ₱{formatted_price}")
             self.update_total()
         else:
-            print("Unknown product.")  # Debug log
+            print("Unknown product.")  # You can replace with a label if needed
 
         self.entry.delete(0, tk.END)
         self.entry.focus_set()
