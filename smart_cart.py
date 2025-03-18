@@ -18,7 +18,7 @@ class SmartCartApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Smart Cart Scanner")
-        self.root.attributes("-fullscreen", True)  # Set to true fullscreen
+        self.root.attributes("-fullscreen", True)  # Set to real fullscreen
 
         self.cart = {}
         self.total = 0.0
@@ -32,7 +32,7 @@ class SmartCartApp:
         self.frame.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
 
         # Styled Listbox (Now using Treeview for better display)
-        self.tree = ttk.Treeview(self.frame, columns=("Product", "Quantity", "Price", "Actions"), show="headings", height=15)
+        self.tree = ttk.Treeview(self.frame, columns=("Product", "Quantity", "Price"), show="headings", height=15)
         self.tree.heading("Product", text="Product")
         self.tree.heading("Quantity", text="Qty")
         self.tree.heading("Price", text="Price")
@@ -84,26 +84,8 @@ class SmartCartApp:
     def update_cart_display(self):
         self.tree.delete(*self.tree.get_children())
         for barcode, item in self.cart.items():
-            row_id = self.tree.insert("", tk.END, values=(item['name'], item['quantity'], f"₱{self.format_price(item['price'] * item['quantity'])}"))
-            self.tree.set(row_id, column="Actions", value="[ + ]  [ - ]")
-            self.tree.bind("<Double-1>", self.modify_quantity)
+            self.tree.insert("", tk.END, values=(item['name'], item['quantity'], f"₱{self.format_price(item['price'] * item['quantity'])}"))
         self.update_total()
-
-    def modify_quantity(self, event):
-        selected_item = self.tree.selection()
-        if selected_item:
-            item_values = self.tree.item(selected_item, "values")
-            for barcode, item in self.cart.items():
-                if item['name'] == item_values[0]:
-                    if event.x > 50:  # Clicked on "-"
-                        if item['quantity'] > 1:
-                            item['quantity'] -= 1
-                        else:
-                            del self.cart[barcode]
-                    else:  # Clicked on "+"
-                        item['quantity'] += 1
-                    break
-            self.update_cart_display()
 
     def remove_item(self):
         selected_item = self.tree.selection()
