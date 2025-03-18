@@ -105,3 +105,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SmartCartApp(root)
     root.mainloop()
+#Gana na tawn.
